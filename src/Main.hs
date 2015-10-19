@@ -16,9 +16,8 @@ module Main where
     import Control.Monad
     import Data.Fixed
 
-    import Handlers
     import Page
-    import Pages.MainPage
+    import Pages.MenuPage
 
 
     windowTitle = "Test"
@@ -39,7 +38,7 @@ module Main where
         playIO (InWindow "Game" (1920,1080) (0,0))
                white
                fps
-               MainPage
-               (return.draw)       -- for foo :: a -> a -> a
-               ((return.).handle)  -- return . foo :: a -> m(a -> a)
-               ((return.).update)  -- (return .). foo :: a -> a -> m a
+               (Menu [])
+               draw
+               handle
+               update

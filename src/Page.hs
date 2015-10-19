@@ -1,5 +1,7 @@
 module Page where
 
+    import Math
+
     import Graphics.Gloss.Data.Picture (Picture)
     import Graphics.Gloss.Interface.IO.Game (Event)
 
@@ -7,6 +9,9 @@ module Page where
     type World = String
 
     class Page a where
-            update :: (Float -> a -> a)
-            handle :: (Event -> a -> a)
-            draw   :: (a -> Picture)
+            update :: (Float -> a -> IO a)
+            handle :: (Event -> a -> IO a)
+            draw   :: (a -> IO Picture)
+
+    data Listener = Button Line (Picture, Picture) [Listener]
+                  | Shortcut [Event] Reaction
