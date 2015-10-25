@@ -10,3 +10,4 @@ module Pages.MenuPage where
                 update _ w = return w
                 handle _ w = return w
                 draw     _ = return $ circleSolid 20
+                listeners (Menu ls) = ls
