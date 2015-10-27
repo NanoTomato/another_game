@@ -38,7 +38,7 @@ module Main where
         playIO (InWindow "Game" (1920,1080) (0,0))
                white
                fps
-               (Menu [])
-               draw
-               handle
-               update
+               menuPage
+               topDraw
+               topHandle
+               topUpdate

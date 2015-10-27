@@ -20,11 +20,11 @@ pvAddVector (fx,fy) (dx,dy) = (fx+dx,fy+dy)
 ppMakeVector :: Point -> Point -> Vector
 ppMakeVector (fx,fy) (tx,ty) = (tx-fx,ty-fy)
     
-pDistance :: Point -> Point -> Float
-pDistance (fx,fy) (tx,ty) = sqrt ((fx-tx)^2 + (fy-ty)^2)
+ppDistance :: Point -> Point -> Float
+ppDistance (fx,fy) (tx,ty) = sqrt ((fx-tx)^2 + (fy-ty)^2)
 
 cpContaining :: Circle -> Point -> Bool
-cpContaining (center, radius) point = radius > pDistance center point
+cpContaining (center, radius) point = radius > ppDistance center point
 
 extendBox :: (Point,Point) -> Float -> (Point,Point)
 extendBox ((fx,fy),(tx,ty)) r = let dx = if fx<tx then r else -r

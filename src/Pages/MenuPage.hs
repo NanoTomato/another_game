@@ -1,13 +1,28 @@
 module Pages.MenuPage where
 
     import Page
+    import Math (ppDistance)
 
-    import Graphics.Gloss.Data.Picture (circleSolid)
+    import System.Exit (exitSuccess)
 
-    data MenuPage = Menu [Listener]
+    import Graphics.Gloss.Data.Picture (circleSolid, circle)
+    import Graphics.Gloss.Interface.IO.Game
 
-    instance Page MenuPage where
-                update _ w = return w
-                handle _ w = return w
-                draw     _ = return $ circleSolid 20
-                listeners (Menu ls) = ls
+    menuPage :: Page
+    menuPage = Page {listeners = menuListeners,
+                     update    = \_ -> return,
+                     handle    = stdHandler,
+                     draw      = stdDraw,
+                     cursorPos = (0,0)}
+
+    menuListeners = [Button [exitButtonListener] (circleSolid 20, circle 20) (\_ -> exitSuccess),
+                     Shortcut [exitListener] (\_ -> exitSuccess)
+                    ]
+
+    exitButtonListener :: Event -> Bool
+    exitButtonListener (EventKey (MouseButton LeftButton) Up _ p) = ppDistance p (0,0) < 20
+    exitButtonListener _ = False
+
+    exitListener :: Event -> Bool
+    exitListener (EventKey (SpecialKey KeySpace) Up _ _) = True
+    exitListener _ = False
