@@ -29,7 +29,10 @@ cpContaining (center, radius) point = radius > ppDistance center point
 extendBox :: (Point,Point) -> Float -> (Point,Point)
 extendBox ((fx,fy),(tx,ty)) r = let dx = if fx<tx then r else -r
                                     dy = if fy<ty then r else -r
-                                in ((fx-dx,fy-dy),(tx+dx,ty+dy)) 
+                                in ((fx-dx,fy-dy),(tx+dx,ty+dy))
+
+makeBox :: Point -> (Float, Float) -> (Point, Point)
+makeBox (x,y) (w,h) = ((x+w/2,y+h/2),(x-w/2,y-h/2))
 
 lcIntersection :: Line -> Circle -> Bool
 lcIntersection box@((fx,fy),(tx,ty)) ((x,y),r) = (uncurry (pointInBox (x,y))) (extendBox box r) && 

@@ -13,9 +13,10 @@ module Pages.MenuPage where
                      update    = \_ -> return,
                      handle    = stdHandler,
                      draw      = stdDraw,
-                     cursorPos = (0,0)}
+                     load      = stdLoad,
+                     worldInfo = SimplePageInfo (0,0)}
 
-    menuListeners = [Button [exitButtonListener] (circleSolid 20, circle 20) (\_ -> exitSuccess),
+    menuListeners = [ResCell "exitButton" (0,0) (\_ -> exitSuccess),
                      Shortcut [exitListener] (\_ -> exitSuccess)
                     ]
 

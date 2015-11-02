@@ -19,6 +19,6 @@ executable another-game
   main-is:             Main.hs
   -- other-modules:       
   -- other-extensions:    
-  build-depends:       base, gloss > 1.9.1.1, process, bifunctors, directory, bmp, bytestring
+  build-depends:       base, gloss > 1.9.1.1, process, bifunctors, directory, bmp, bytestring, split, regex-tdfa
   hs-source-dirs:      src
   default-language:    Haskell2010
