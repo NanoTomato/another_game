@@ -4,6 +4,7 @@ module Page where
 
     import Math
     import Resources
+    import Mechanics
 
     import Data.List
     import Data.Maybe
@@ -22,6 +23,9 @@ module Page where
                                  prevPage ::Page,
                                  nextDir  ::String,
                                  progress ::Float}
+                   | GameInfo {cursorPos ::Math.Point,
+                               world     ::World,
+                               windowSize::(Float,Float)}
 
     data Page = Page {listeners :: [Listener],
                       update    :: Float -> Page -> IO Page,
