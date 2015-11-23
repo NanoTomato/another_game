@@ -1,16 +1,14 @@
-{-# LANGUAGE Rank2Types #-}
-
 module Page where
 
     import Math
     import Resources
-    import Mechanics
+    import GameStructures
 
     import Data.List
     import Data.Maybe
     import Data.Functor
 
-    import Graphics.Gloss.Data.Picture (Picture, pictures, blank)
+    import Graphics.Gloss.Data.Picture (Picture, pictures, blank, translate)
     import Graphics.Gloss.Interface.IO.Game
 
 
@@ -39,7 +37,9 @@ module Page where
                   | ResCell String Math.Point Reaction
 
     stdHandler :: Event -> Page -> IO Page
-    stdHandler (EventMotion p) (Page ls u h d ld _) = return $ Page ls u h d ld $ SimplePageInfo p
+    stdHandler (EventMotion p) (Page ls u h d ld (SimplePageInfo _)) = return $ Page ls u h d ld $ SimplePageInfo p
+    stdHandler (EventMotion p) (Page ls u h d ld (LoaderInfo _ np pp nd pr)) = return $ Page ls u h d ld $ LoaderInfo p np pp nd pr
+    stdHandler (EventMotion p) (Page ls u h d ld (GameInfo _ w wsz)) = return $ Page ls u h d ld $ GameInfo p w wsz
     stdHandler e p = maybeModify p $ reaction <$> find (any ($ e) . eventFilters) (listeners p)
 
     stdDraw :: Page -> IO Picture
@@ -51,10 +51,12 @@ module Page where
     stdLoad (Page l u h d ld wi) (Resource brs) = Page (map (findRes brs) l) u h d ld wi where
             findRes rs (ResCell n p r) = fromMaybe (testButton p) $ fmap (loadSingleRes p r) $ find (checkRes n) rs
             findRes _ l = l
-            loadSingleRes p r (ButtonRes n imgs (w,h)) = Button [mousePressEventHandler $ makeBox p (fromIntegral w,fromIntegral h)] imgs r where
+            loadSingleRes p r (ButtonRes n (img1,img2) (w,h)) = Button [mousePressEventHandler $ makeBox p (fromIntegral w,fromIntegral h)] mimgs r where
                 mousePressEventHandler (f,t) (EventKey (MouseButton LeftButton) Up _ p) = Math.pointInBox p f t
                 mousePressEventHandler _ _ = False
+                mimgs = (trans p img1,trans p img2)
             checkRes str (ButtonRes n _ _) = str == n
+            trans = uncurry translate
 
     genButtonPressEvent :: Math.Point -> Event
     genButtonPressEvent = EventKey (MouseButton LeftButton) Up (Modifiers Down Down Down)
