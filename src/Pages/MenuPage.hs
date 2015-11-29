@@ -19,7 +19,7 @@ module Pages.MenuPage where
                      worldInfo = SimplePageInfo (0,0)}
 
     menuListeners = [ResCell "exitButton" (0,-50) (\_ -> exitSuccess),
-                     ResCell "playButton" (0,50) (\p -> return $ loaderPage p "TestGame" $ gamePage $ World testGameUnits blank),
+                     ResCell "playButton" (0,50) (\p -> return $ loaderPage p "TestGame" $ gamePage $ World [] testGameUnits blank),
                      Shortcut [exitListener] (\_ -> exitSuccess)
                     ]
 

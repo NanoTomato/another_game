@@ -6,7 +6,16 @@ module GameStructures where
     import Data.List (intercalate)
     import Control.Monad
 
-    data World = World [Unit] Picture
+    data GameEvent = Move Direction
+                   | Apply
+                   | Open
+
+    data Direction = DUp
+                   | DDown
+                   | DLeft
+                   | DRight
+
+    data World = World [GameEvent] [Unit] Picture
 
     data UnitDrawInfo = ItemDrawInfo Picture
                       | WallDrawInfo Picture
@@ -55,4 +64,4 @@ module GameStructures where
                       show (Effect p _ _ _ _)         = "Effect: " ++ show p
                       show (Wall p _ sd)              = "Wall: " ++ show p ++ (';':show sd)
 
-    debugShowUnits (World us _) = (\x -> return $ World x blank) =<< mapM (\x -> print x >> return x) us
+    debugShowUnits (World es us _) = (\x -> return $ World es x blank) =<< mapM (\x -> print x >> return x) us

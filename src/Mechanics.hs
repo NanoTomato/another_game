@@ -27,45 +27,48 @@ module Mechanics where
     
     splitUnitList :: [Unit] -> ([Unit],[Unit],[Unit],[Unit],[Unit])
     splitUnitList us = splitUnitList' us ([],[],[],[],[]) where
-                      splitUnitList' [] ls = ls
-                      splitUnitList' (c@(Creature _ _ _ _ _ _ _):us) (cs,ps,is,es,ws) = splitUnitList' us (c:cs,ps,is,es,ws)
-                      splitUnitList' (p@(Projectile _ _ _ _):us)     (cs,ps,is,es,ws) = splitUnitList' us (cs,p:ps,is,es,ws)
-                      splitUnitList' (i@(Item _ _ _):us)             (cs,ps,is,es,ws) = splitUnitList' us (cs,ps,i:is,es,ws)
-                      splitUnitList' (e@(Effect _ _ _ _ _):us)       (cs,ps,is,es,ws) = splitUnitList' us (cs,ps,is,e:es,ws)
-                      splitUnitList' (w@(Wall _ _ _):us)             (cs,ps,is,es,ws) = splitUnitList' us (cs,ps,is,es,w:ws)
+                 splitUnitList' [] ls = ls
+                 splitUnitList' (c@(Creature _ _ _ _ _ _ _):us) (cs,ps,is,es,ws) = splitUnitList' us (c:cs,ps,is,es,ws)
+                 splitUnitList' (p@(Projectile _ _ _ _):us)     (cs,ps,is,es,ws) = splitUnitList' us (cs,p:ps,is,es,ws)
+                 splitUnitList' (i@(Item _ _ _):us)             (cs,ps,is,es,ws) = splitUnitList' us (cs,ps,i:is,es,ws)
+                 splitUnitList' (e@(Effect _ _ _ _ _):us)       (cs,ps,is,es,ws) = splitUnitList' us (cs,ps,is,e:es,ws)
+                 splitUnitList' (w@(Wall _ _ _):us)             (cs,ps,is,es,ws) = splitUnitList' us (cs,ps,is,es,w:ws)
 
     updateCreatures :: [Unit] -> [Unit] -> [Unit] -> [Unit] -> [Unit]
     updateCreatures [] _ _ _ = []
-    updateCreatures (c@(Creature pos di s sl h r i):cs) ws is acc = if h <= 0
-                                                                    then updateCreatures cs ws is (c:acc)
-                                                                    else (Creature newPos di newSpeed sl h r i):(updateCreatures cs ws is (c:acc)) where
-                                                                        newPos = pvAddVector pos newSpeed
-                                                                        newSpeed = foldl vvReflectVector oldSpeed vs
-                                                                        oldSpeed = if s==(0,0) then s else (mulSV sl $ normalizeV s)
-                                                                        nextStepPos = pvAddVector pos oldSpeed
-                                                                        vs = wallIntVecs ++ creatIntVecs
-                                                                        wallIntVecs = [cbIntersectionVector (nextStepPos,r) (makeWallBox w)|w<-ws]
-                                                                        creatIntVecs = [ccIntersectionVector (nextStepPos,r) (position c,radius c)|c<-(cs++acc)]
+    updateCreatures (c@(Creature pos di s sl h r i):cs) ws is acc =
+        if h <= 0
+        then updateCreatures cs ws is (c:acc)
+        else (Creature newPos di newSpeed sl h r i):(updateCreatures cs ws is (c:acc)) where
+                 newPos = pvAddVector pos newSpeed
+                 newSpeed = foldl vvReflectVector oldSpeed vs
+                 oldSpeed = if s==(0,0) then s else (mulSV sl $ normalizeV s)
+                 nextStepPos = pvAddVector pos oldSpeed
+                 vs = wallIntVecs ++ creatIntVecs
+                 wallIntVecs = [cbIntersectionVector (nextStepPos,r) (makeWallBox w)|w<-ws]
+                 creatIntVecs = [ccIntersectionVector (nextStepPos,r) (position c,radius c)|c<-(cs++acc)]
 
     updateProjectiles :: [Unit] -> [Unit] -> [Unit] -> [Unit] -> [Unit] -> ([Unit],[Unit])
     updateProjectiles [] _ _ rs acc = (rs, acc)
-    updateProjectiles ((Projectile pos di s r):ps) cs ws rs acc = if any (creatureHit newPos) cs || any (\w->let (p1,p2)=makeWallBox w in pointInBox newPos p1 p2) ws
-                                                                  then updateProjectiles ps cs ws (r:rs) acc
-                                                                  else updateProjectiles ps cs ws rs (Projectile newPos di s r:acc) where
-                                                                      newPos = pvAddVector pos s
-                                                                      creatureHit p (Creature pos _ _ _ _ r i) = cpContaining (pos, r) p
+    updateProjectiles ((Projectile pos di s r):ps) cs ws rs acc =
+        if any (creatureHit newPos) cs || any (\w->let (p1,p2)=makeWallBox w in pointInBox newPos p1 p2) ws
+        then updateProjectiles ps cs ws (r:rs) acc
+        else updateProjectiles ps cs ws rs (Projectile newPos di s r:acc) where
+                 newPos = pvAddVector pos s
+                 creatureHit p (Creature pos _ _ _ _ r i) = cpContaining (pos, r) p
 
     applyEffects :: [Unit] -> [Unit] -> [Unit]
     applyEffects [] us = us
-    applyEffects (e@(Effect _ _ _ ip f):es) us = if isEffectEnded e us  -- TODO: Rename this
-                                                 then applyEffects es $ map (\u -> if ip u then f u else u) us
-                                                 else modify e:applyEffects es (map (\u -> if ip u then f u else u) us) where
-                                                     isEffectEnded (Effect _ _ Instant _ _) _ = True
-                                                     isEffectEnded (Effect _ _ Constant _ _) _ = False
-                                                     isEffectEnded (Effect _ _ (Timer t) _ _) _ = t <= 0
-                                                     isEffectEnded (Effect _ _ Single ip _) us = any ip us
-                                                     modify (Effect p di (Timer t) ip f) = Effect p di (Timer (t-1)) ip f
-                                                     modify e = e
+    applyEffects (e@(Effect _ _ _ ip f):es) us =
+        if isEffectEnded e us  -- TODO: Rename this
+        then applyEffects es $ map (\u -> if ip u then f u else u) us
+        else modify e:applyEffects es (map (\u -> if ip u then f u else u) us) where
+                 isEffectEnded (Effect _ _ Instant _ _) _ = True
+                 isEffectEnded (Effect _ _ Constant _ _) _ = False
+                 isEffectEnded (Effect _ _ (Timer t) _ _) _ = t <= 0
+                 isEffectEnded (Effect _ _ Single ip _) us = any ip us
+                 modify (Effect p di (Timer t) ip f) = Effect p di (Timer (t-1)) ip f
+                 modify e = e
 
     makeWorldPicture :: [Unit] -> ([Unit],Picture)
     makeWorldPicture us = second pictures $ foldl (\(us,ps) -> bimap (:us) (:ps)) ([],[]) $ map drawUnit us
@@ -73,8 +76,11 @@ module Mechanics where
     makeWallBox :: Unit -> (Math.Point,Math.Point)
     makeWallBox (Wall p _ s) = makeBox p s
 
-    updateWorld :: World -> World
-    updateWorld (World us _) = uncurry World $ makeWorldPicture $ applyEffects (es++rs) $ concat [mcs,mps,is,ws] where
+    updateWorld' :: World -> [Unit]
+    updateWorld' (World _ us _) = applyEffects (es++rs) $ concat [mcs,mps,is,ws] where
         (cs,ps,is,es,ws) = splitUnitList us
         mcs = updateCreatures cs ws is []
         (rs,mps) = updateProjectiles ps cs ws [] []
+
+    updateWorld :: World -> IO World
+    updateWorld w = (return . uncurry (World []) . makeWorldPicture) =<< return (updateWorld' w)
