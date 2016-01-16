@@ -17,10 +17,10 @@ pvMakeLine f@(fx,fy) (dx,dy) = (f,(fx+dx,fy+dy))
 
 pvAddVector :: Point -> Vector -> Point
 pvAddVector (fx,fy) (dx,dy) = (fx+dx,fy+dy)
-                               
+
 ppMakeVector :: Point -> Point -> Vector
 ppMakeVector (fx,fy) (tx,ty) = (tx-fx,ty-fy)
-    
+
 ppDistance :: Point -> Point -> Float
 ppDistance (fx,fy) (tx,ty) = sqrt ((fx-tx)^2 + (fy-ty)^2)
 
@@ -61,8 +61,8 @@ vvMagicAdd v1 v2 = vvScalarSum v1 $ vvReflectVector v1 v2
 
 vvReflectVector :: Vector -> Vector -> Vector
 vvReflectVector (0,0) _ = (0,0)
-vvReflectVector s (0,0) = s
-vvReflectVector s@(xs,ys) n@(xn,yn) = V.rotateV (-alpha) $ (\x->(0,x)) $ snd $ V.rotateV alpha s where -- mulSV for leaving intersection area
+vvReflectVector s (0,0) = (0,0)
+vvReflectVector s@(xs,ys) n@(xn,yn) = V.rotateV (pi-alpha) $ (\x->(x,0)) $ fst $ V.rotateV alpha s where -- mulSV for leaving intersection area
     alpha = signum (maybeZero (-yn) ys) * V.angleVV n (1,0)
     maybeZero 0 y = y
     maybeZero x _ = x
@@ -71,18 +71,18 @@ negateV :: Vector -> Vector
 negateV (x,y) = (-x,-y)
 
 lcIntersection :: Line -> Circle -> Bool
-lcIntersection box@((fx,fy),(tx,ty)) ((x,y),r) = (uncurry (pointInBox (x,y))) (extendBox box r) && 
+lcIntersection box@((fx,fy),(tx,ty)) ((x,y),r) = uncurry (pointInBox (x,y)) (extendBox box r) &&
                                                  ((fx-x)^2 + (fy-y)^2 < r^2 ||  -- optimized cpContaining
                                                   (tx-x)^2 + (ty-y)^2 < r^2 ||
                                                   r^2 * (a^2 + b^2) > c^2) where  -- algorithm from emaxx
                                                       c = - ((fx-x)*a + (fy-y)*b)
-                                                      a = (ty-fy)
-                                                      b = (fx-tx)
+                                                      a = ty-fy
+                                                      b = fx-tx
 worldToPage :: Point -> (Int, Int) -> Point
-worldToPage (x,y) (rx,ry) = (x*(fromIntegral rx)/etalonWidth,y*(fromIntegral ry)/etalonHeight)
+worldToPage (x,y) (rx,ry) = (x*fromIntegral rx/etalonWidth,y*fromIntegral ry/etalonHeight)
 
 pageToWorld :: Point -> (Int, Int) -> Point
-pageToWorld (x,y) (rx,ry) = (x*etalonWidth/(fromIntegral rx),y*etalonHeight/(fromIntegral ry))
+pageToWorld (x,y) (rx,ry) = (x*etalonWidth/fromIntegral rx,y*etalonHeight/fromIntegral ry)
 
 notZero x = if x == 0 then aVeryLittleValue else x
 notZeroSum x y = if x == -y then signum x * aVeryLittleValue else x + y

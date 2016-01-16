@@ -14,11 +14,11 @@ module Mechanics where
     myTranslate = uncurry translate
 
     drawUnit :: Unit -> (Unit,Picture)
-    drawUnit (Creature p di@(CreatureDrawInfo pic) s sl h r i) = (Creature p di s sl h r i,myTranslate p pic)
-    drawUnit (Projectile p (ProjectileDrawInfo (pic:ps)) s i)  = (Projectile p (ProjectileDrawInfo ps) s i,myTranslate p pic)
-    drawUnit (Item p di@(ItemDrawInfo pic) i)                  = (Item p di i,myTranslate p pic)
-    drawUnit (Effect p di@(EffectDrawInfo (pic:ps)) at ip e)   = (Effect p (EffectDrawInfo ps) at ip e,myTranslate p pic)
-    drawUnit (Wall p di@(WallDrawInfo pic) s)                  = (Wall p di s,myTranslate p pic)
+    drawUnit (Creature p di@(CreatureDrawInfo pic) s sl h r i si) = (Creature p di s sl h r i si,myTranslate p pic)
+    drawUnit (Projectile p (ProjectileDrawInfo (pic:ps)) s i)     = (Projectile p (ProjectileDrawInfo ps) s i,myTranslate p pic)
+    drawUnit (Item p di@(ItemDrawInfo pic) i)                     = (Item p di i,myTranslate p pic)
+    drawUnit (Effect p di@(EffectDrawInfo (pic:ps)) at ip e)      = (Effect p (EffectDrawInfo ps) at ip e,myTranslate p pic)
+    drawUnit (Wall p di@(WallDrawInfo pic) s)                     = (Wall p di s,myTranslate p pic)
 
     drawItemSocket :: ItemSocket -> [Picture]
     drawItemSocket EmptyItemSocket = [Blank]
@@ -34,14 +34,14 @@ module Mechanics where
                  splitUnitList' (e@(Effect{}):us)     (cs,ps,is,es,ws) = splitUnitList' us (cs,ps,is,e:es,ws)
                  splitUnitList' (w@(Wall{}):us)       (cs,ps,is,es,ws) = splitUnitList' us (cs,ps,is,es,w:ws)
 
-    updateCreatures :: [Unit] -> [Unit] -> [Unit] -> [Unit] -> [Unit]
-    updateCreatures [] _ _ _ = []
-    updateCreatures (c@(Creature pos di s sl h r i):cs) ws is acc =
+    updateCreatures :: [(String,[GameEvent])] -> [Unit] -> [Unit] -> [Unit] -> [Unit] -> [Unit]
+    updateCreatures _ [] _ _ _ = []
+    updateCreatures ges (c@(Creature pos di s sl h r i si):cs) ws is acc =
         if h <= 0
-        then updateCreatures cs ws is (c:acc)
-        else Creature newPos di newSpeed sl h r i : updateCreatures cs ws is (c:acc) where
+        then updateCreatures ges cs ws is (c:acc)
+        else Creature newPos di newSpeed sl h r i si : updateCreatures ges cs ws is (c:acc) where
                  newPos = pvAddVector pos newSpeed
-                 newSpeed = foldl vvReflectVector oldSpeed vs
+                 newSpeed = foldl vvMagicAdd oldSpeed vs
                  oldSpeed = if s==(0,0) then s else mulSV sl $ normalizeV s
                  nextStepPos = pvAddVector pos oldSpeed
                  vs = wallIntVecs ++ creatIntVecs
@@ -55,7 +55,7 @@ module Mechanics where
         then updateProjectiles ps cs ws (r:rs) acc
         else updateProjectiles ps cs ws rs (Projectile newPos di s r:acc) where
                  newPos = pvAddVector pos s
-                 creatureHit p (Creature pos _ _ _ _ r i) = cpContaining (pos, r) p
+                 creatureHit p (Creature pos _ _ _ _ r i _) = cpContaining (pos, r) p
 
     applyEffects :: [Unit] -> [Unit] -> [Unit]
     applyEffects [] us = us
@@ -76,11 +76,11 @@ module Mechanics where
     makeWallBox :: Unit -> (Math.Point,Math.Point)
     makeWallBox (Wall p _ s) = makeBox p s
 
-    updateWorld' :: World -> [Unit]
-    updateWorld' (World _ us _) = applyEffects (es++rs) $ concat [mcs,mps,is,ws] where
+    updateWorld' :: World -> IO [Unit]
+    updateWorld' (World s ges us _) = return $ applyEffects (es++rs) $ concat [mcs,mps,is,ws] where
         (cs,ps,is,es,ws) = splitUnitList us
-        mcs = updateCreatures cs ws is []
+        mcs = updateCreatures [(s,ges)] cs ws is []
         (rs,mps) = updateProjectiles ps cs ws [] []
 
     updateWorld :: World -> IO World
-    updateWorld w = (return . uncurry (World []) . makeWorldPicture) =<< return (updateWorld' w)
+    updateWorld w = (return . uncurry (World (playerId w) []) . makeWorldPicture) =<< updateWorld' w
