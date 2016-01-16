@@ -10,16 +10,17 @@ module Pages.MenuPage where
     import Graphics.Gloss.Data.Picture (circleSolid, circle, blank, rectangleWire)
     import Graphics.Gloss.Interface.IO.Game
 
-    menuPage :: Page
-    menuPage = Page {listeners = menuListeners,
-                     update    = \_ -> return,
-                     handle    = stdHandler,
-                     draw      = stdDraw,
-                     load      = stdLoad,
-                     worldInfo = SimplePageInfo (0,0)}
+    menuPage :: String -> Page
+    menuPage pd = Page {listeners = menuListeners,
+                        update    = \_ -> return,
+                        handle    = stdHandler,
+                        draw      = stdDraw,
+                        load      = stdLoad,
+                        pathDlmtr = pd,
+                        worldInfo = SimplePageInfo (0,0)}
 
     menuListeners = [ResCell "exitButton" (0,-50) (\_ -> exitSuccess),
-                     ResCell "playButton" (0,50) (\p -> return $ loaderPage p "TestGame" $ gamePage $ World [] testGameUnits blank),
+                     ResCell "playButton" (0,50) (\p -> return $ loaderPage p "TestGame" (pathDlmtr p) $ gamePage (pathDlmtr p) $ World [] testGameUnits blank),
                      Shortcut [exitListener] (\_ -> exitSuccess)
                     ]
 

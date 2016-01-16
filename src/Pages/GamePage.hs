@@ -10,18 +10,19 @@ module Pages.GamePage where
     import Graphics.Gloss.Data.Picture (circleSolid, circle, pictures)
     import Graphics.Gloss.Interface.IO.Game
 
-    gamePage :: World -> Page
-    gamePage w = Page {listeners = gamePageListeners,
-                       update    = gameUpdater,
-                       handle    = stdHandler,
-                       draw      = gameDraw,
-                       load      = stdLoad,
-                       worldInfo = GameInfo (0,0) w (0,0)}
+    gamePage :: String -> World -> Page
+    gamePage pd w = Page {listeners = gamePageListeners,
+                          update    = gameUpdater,
+                          handle    = stdHandler,
+                          draw      = gameDraw,
+                          load      = stdLoad,
+                          pathDlmtr = pd,
+                          worldInfo = GameInfo (0,0) w (0,0)}
 
-    gameUpdater _ (Page ls u h d ld (GameInfo cp w wsz)) =
-        (\w' -> return $ Page ls u h d ld (GameInfo cp (w') wsz)) =<< updateWorld w
+    gameUpdater _ (Page ls u h d ld pd (GameInfo cp w wsz)) =
+        (\w' -> return $ Page ls u h d ld pd (GameInfo cp (w') wsz)) =<< updateWorld w
 
-    gameDraw p@(Page _ _ _ _ _ (GameInfo _ (World _ _ pic) _)) = fmap (pictures.(:[pic])) $ stdDraw p
+    gameDraw p@(Page _ _ _ _ _ _ (GameInfo _ (World _ _ pic) _)) = fmap (pictures.(:[pic])) $ stdDraw p
 
     -- =============================================================== --
 
@@ -31,8 +32,9 @@ module Pages.GamePage where
     toGameMenuHandler (EventKey (SpecialKey KeyEsc) Up _ _) = True
     toGameMenuHandler _ = False
 
-    toGameMenuReaction p@(Page _ _ _ _ _ (GameInfo _ w _)) =
-        return $ loaderPage p "TestGameMenu" $ (gameMenuPage w pauseMenuListeners)
+    toGameMenuReaction p@(Page _ _ _ _ _ _ (GameInfo _ w _)) =
+        return $ loaderPage p "TestGameMenu" pd $ (gameMenuPage w pauseMenuListeners pd) where
+            pd = (pathDlmtr p)
 
     -- =============================================================== --
 
@@ -43,7 +45,8 @@ module Pages.GamePage where
     backToGameHandler (EventKey (SpecialKey KeyEsc) Up _ _) = True
     backToGameHandler _ = False
 
-    backToGameReaction p = return $ loaderPage p "TestGame" $ gamePage $ (world $ worldInfo $ p)
+    backToGameReaction p = return $ loaderPage p "TestGame" pd $ gamePage pd $ (world $ worldInfo $ p) where
+        pd = (pathDlmtr p)
 
     -- =============================================================== --
 

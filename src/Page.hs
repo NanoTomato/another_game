@@ -30,6 +30,7 @@ module Page where
                       handle    :: Event -> Page -> IO Page,
                       draw      :: Page -> IO Picture,
                       load      :: Page -> Resource -> Page,
+                      pathDlmtr :: String,
                       worldInfo :: WorldInfo}
 
     data Listener = Button [EventFilter] (Picture, Picture) Reaction
@@ -37,9 +38,9 @@ module Page where
                   | ResCell String Math.Point Reaction
 
     stdHandler :: Event -> Page -> IO Page
-    stdHandler (EventMotion p) (Page ls u h d ld (SimplePageInfo _)) = return $ Page ls u h d ld $ SimplePageInfo p
-    stdHandler (EventMotion p) (Page ls u h d ld (LoaderInfo _ np pp nd pr)) = return $ Page ls u h d ld $ LoaderInfo p np pp nd pr
-    stdHandler (EventMotion p) (Page ls u h d ld (GameInfo _ w wsz)) = return $ Page ls u h d ld $ GameInfo p w wsz
+    stdHandler (EventMotion p) (Page ls u h d ld pd (SimplePageInfo _)) = return $ Page ls u h d ld pd $ SimplePageInfo p
+    stdHandler (EventMotion p) (Page ls u h d ld pd (LoaderInfo _ np pp nd pr)) = return $ Page ls u h d ld pd $ LoaderInfo p np pp nd pr
+    stdHandler (EventMotion p) (Page ls u h d ld pd (GameInfo _ w wsz)) = return $ Page ls u h d ld pd $ GameInfo p w wsz
     stdHandler e p = maybeModify p $ reaction <$> find (any ($ e) . eventFilters) (listeners p)
 
     stdDraw :: Page -> IO Picture
@@ -48,7 +49,7 @@ module Page where
             drawListener p (Button efs (p1,p2) _) = if any ($ genButtonPressEvent p) efs then p2 else p1
 
     stdLoad :: Page -> Resource -> Page
-    stdLoad (Page l u h d ld wi) (Resource brs) = Page (map (findRes brs) l) u h d ld wi where
+    stdLoad (Page l u h d ld pd wi) (Resource brs) = Page (map (findRes brs) l) u h d ld pd wi where
             findRes rs (ResCell n p r) = fromMaybe (testButton p) $ fmap (loadSingleRes p r) $ find (checkRes n) rs
             findRes _ l = l
             loadSingleRes p r (ButtonRes n (img1,img2) (w,h)) = Button [mousePressEventHandler $ makeBox p (fromIntegral w,fromIntegral h)] mimgs r where
