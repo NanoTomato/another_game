@@ -12,25 +12,26 @@ module Pages.MenuPage where
 
     menuPage :: String -> Page
     menuPage pd = Page {listeners = menuListeners,
-                        update    = \_ -> return,
+                        update    = const return,
                         handle    = stdHandler,
                         draw      = stdDraw,
                         load      = stdLoad,
                         pathDlmtr = pd,
                         worldInfo = SimplePageInfo (0,0)}
 
-    menuListeners = [ResCell "exitButton" (0,-50) (\_ -> exitSuccess),
-                     ResCell "playButton" (0,50) (\p -> return $ loaderPage p "TestGame" (pathDlmtr p) $ gamePage (pathDlmtr p) $ World [] testGameUnits blank),
-                     Shortcut [exitListener] (\_ -> exitSuccess)
+    menuListeners = [ResCell "exitButton" (0,-50) (const exitSuccess),
+                     ResCell "playButton" (0,50) (\p -> return $ loaderPage p "TestGame" (pathDlmtr p) $ gamePage (pathDlmtr p) $ World "asd" [] testGameUnits blank),
+                     Shortcut [exitListener] (const exitSuccess)
                     ]
 
     exitListener :: Event -> Bool
     exitListener (EventKey (SpecialKey KeySpace) Up _ _) = True
     exitListener _ = False
 
-    testGameUnits = [Creature (0,0) (CreatureDrawInfo $ circleSolid 30) (2,2) 5 1 30 [],
-                     Creature (280,250) (CreatureDrawInfo $ circle 30) (0,0) 0 1 30 [],
-                     Creature (60,500) (CreatureDrawInfo $ circle 30) (0,0) 0 1 30 [],
-                     Creature (250,120) (CreatureDrawInfo $ circle 30) (0,0) 0 1 30 [],
+    testGameUnits = [Creature (-100,-100) (CreatureDrawInfo $ circleSolid 30) (2,2) 5 1 30 [] (Just "asd"),
+                     Creature (0,0) (CreatureDrawInfo $ circleSolid 30) (2,2) 5 1 30 [] Nothing,
+                     Creature (280,250) (CreatureDrawInfo $ circle 30) (0,0) 0 1 30 [] Nothing,
+                     Creature (60,500) (CreatureDrawInfo $ circle 30) (0,0) 0 1 30 [] Nothing,
+                     Creature (250,120) (CreatureDrawInfo $ circle 30) (0,0) 0 1 30 [] Nothing,
                      Wall (130,130) (WallDrawInfo $ rectangleWire 100 20) (100, 20),
                      Wall (400,50) (WallDrawInfo $ rectangleWire 20 1000) (20,1000)]

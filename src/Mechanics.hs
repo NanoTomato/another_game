@@ -5,6 +5,7 @@ module Mechanics where
     import Math
 
     import Data.List
+    import Data.Maybe
     import Control.Arrow
 
     import Graphics.Gloss.Data.Vector (normalizeV, mulSV)
@@ -42,7 +43,12 @@ module Mechanics where
         else Creature newPos di newSpeed sl h r i si : updateCreatures ges cs ws is (c:acc) where
                  newPos = pvAddVector pos newSpeed
                  newSpeed = foldl vvMagicAdd oldSpeed vs
-                 oldSpeed = if s==(0,0) then s else mulSV sl $ normalizeV s
+                 oldSpeed = maxSpeed $ if si == Nothing then s else givenSpeed
+                 maxSpeed v = if v==(0,0) then v else mulSV sl $ normalizeV v
+                 givenSpeed = foldl vvScalarSum (0,0) givenDirections
+                 givenDirections = map (\(Move d)->directionVector d) givenMoveEvents
+                 givenMoveEvents = filter (flip elem $ map snd directionDict) givenEvents
+                 givenEvents = fromMaybe [] $ lookup (fromJust si) ges
                  nextStepPos = pvAddVector pos oldSpeed
                  vs = wallIntVecs ++ creatIntVecs
                  wallIntVecs = [cbIntersectionVector (nextStepPos,r) (makeWallBox w)|w<-ws]
@@ -83,4 +89,5 @@ module Mechanics where
         (rs,mps) = updateProjectiles ps cs ws [] []
 
     updateWorld :: World -> IO World
-    updateWorld w = (return . uncurry (World (playerId w) []) . makeWorldPicture) =<< updateWorld' w
+    updateWorld w@(World pid ges _ _) = (return . uncurry (World pid updatedEvents) . makeWorldPicture) =<< updateWorld' w where
+        updatedEvents = nub $ filter (\ge -> elem ge $ map snd directionDict) ges
