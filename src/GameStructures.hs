@@ -9,12 +9,12 @@ module GameStructures where
 
     data GameEvent = Move Direction
                    | Apply
-                   | Open
+                   | Open deriving Show
 
     data Direction = DUp
                    | DDown
                    | DLeft
-                   | DRight deriving Eq
+                   | DRight deriving (Eq, Show)
 
     directionDict :: [(Char,GameEvent)]
     directionDict = [('w',Move DUp),

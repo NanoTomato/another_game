@@ -21,7 +21,8 @@ module Page where
                                  prevPage ::Page,
                                  nextDir  ::String,
                                  progress ::Float}
-                   | GameInfo {cursorPos ::Math.Point,
+                   | GameInfo {debugInfo ::String,
+                               cursorPos ::Math.Point,
                                world     ::World,
                                windowSize::(Float,Float)}
 
@@ -40,7 +41,7 @@ module Page where
     stdHandler :: Event -> Page -> IO Page
     stdHandler (EventMotion p) (Page ls u h d ld pd (SimplePageInfo _)) = return $ Page ls u h d ld pd $ SimplePageInfo p
     stdHandler (EventMotion p) (Page ls u h d ld pd (LoaderInfo _ np pp nd pr)) = return $ Page ls u h d ld pd $ LoaderInfo p np pp nd pr
-    stdHandler (EventMotion p) (Page ls u h d ld pd (GameInfo _ w wsz)) = return $ Page ls u h d ld pd $ GameInfo p w wsz
+    stdHandler (EventMotion p) (Page ls u h d ld pd (GameInfo di _ w wsz)) = return $ Page ls u h d ld pd $ GameInfo di p w wsz
     stdHandler e p = maybeModify p $ reaction <$> find (any ($ e) . eventFilters) (listeners p)
 
     stdDraw :: Page -> IO Picture
@@ -50,7 +51,7 @@ module Page where
 
     stdLoad :: Page -> Resource -> Page
     stdLoad (Page l u h d ld pd wi) (Resource brs) = Page (map (findRes brs) l) u h d ld pd wi where
-            findRes rs (ResCell n p r) = fromMaybe (testButton p) $ fmap (loadSingleRes p r) $ find (checkRes n) rs
+            findRes rs (ResCell n p r) = maybe (testButton p) (loadSingleRes p r) (find (checkRes n) rs)
             findRes _ l = l
             loadSingleRes p r (ButtonRes n (img1,img2) (w,h)) = Button [mousePressEventHandler $ makeBox p (fromIntegral w,fromIntegral h)] mimgs r where
                 mousePressEventHandler (f,t) (EventKey (MouseButton LeftButton) Up _ p) = Math.pointInBox p f t
@@ -63,7 +64,7 @@ module Page where
     genButtonPressEvent = EventKey (MouseButton LeftButton) Up (Modifiers Down Down Down)
 
     testButton :: Math.Point -> Listener
-    testButton p = Button [] ((uncurry translate) p $ circleSolid 10,(uncurry translate) p $ circle 10) return
+    testButton p = Button [] (uncurry translate p $ circleSolid 10,(uncurry translate) p $ circle 10) return
 
     eventFilters :: Listener -> [EventFilter]
     eventFilters (Button efs _ _) = efs

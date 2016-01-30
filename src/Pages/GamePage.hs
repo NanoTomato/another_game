@@ -8,10 +8,12 @@ module Pages.GamePage where
     import Pages.GameMenuPage
     import System.Exit (exitSuccess)
 
-    import Graphics.Gloss.Data.Picture (circleSolid, circle, pictures)
+    import Graphics.Gloss.Data.Picture (circleSolid, circle, pictures, text, scale)
     import Graphics.Gloss.Interface.IO.Game
 
     import Control.Applicative
+    import Data.Maybe
+    import Data.List
 
     gamePage :: String -> World -> Page
     gamePage pd w = Page {listeners = gamePageListeners,
@@ -20,29 +22,37 @@ module Pages.GamePage where
                           draw      = gameDraw,
                           load      = stdLoad,
                           pathDlmtr = pd,
-                          worldInfo = GameInfo (0,0) w (0,0)}
+                          worldInfo = GameInfo "" (0,0) w (0,0)}
 
-    gameUpdater _ (Page ls u h d ld pd (GameInfo cp w wsz)) =
-        (\w' -> return $ Page ls u h d ld pd (GameInfo cp w' wsz)) =<< updateWorld w
+    gameUpdater _ (Page ls u h d ld pd (GameInfo di cp w wsz)) =
+        (\w' -> return $ Page ls u h d ld pd (GameInfo di cp w' wsz)) =<< updateWorld w
 
-    gameDraw p@(Page _ _ _ _ _ _ (GameInfo _ (World _ _ _ pic) _)) = pictures.(:[pic]) <$> stdDraw p
+    gameDraw p@(Page _ _ _ _ _ _ (GameInfo di _ (World _ _ _ pic) _)) = pictures.(:[pic, scale 0.1 0.1 $ text di]) <$> stdDraw p
+
+    debugHandler e (Page ls u h d ld pd (GameInfo di cp w wsz)) =
+        stdHandler e $ Page ls u h d ld pd (GameInfo newDebugInfo cp w wsz) where
+            newDebugInfo = if isJust (find (any ($ e) . eventFilters) ls) then show e ++ ">>>|||<<<" ++ show (events w) else di
 
     -- =============================================================== --
 
     gamePageListeners :: [Listener]
-    gamePageListeners = map stopListener directionDict
-                     ++ map walkListener directionDict
+    gamePageListeners = map walkListener directionDict
+                     ++ map stopListener directionDict
                      ++ [Shortcut [toGameMenuHandler] toGameMenuReaction]
-                     ++ [Shortcut [exitL] (const exitSuccess)]
+                     ++ [Shortcut [exitL] (exitR)]
 
     exitL :: Event -> Bool
     exitL (EventKey (SpecialKey KeySpace) Up _ _) = True
     exitL _ = False
 
+    exitR :: Page -> IO Page
+    exitR (Page ls u h d l pd (GameInfo di cp (World s ges us pic) wi)) =
+            return $ Page ls u h d l pd (GameInfo di cp (World s (Open:ges) us pic) wi)
+
     toGameMenuHandler (EventKey (SpecialKey KeyEsc) Up _ _) = True
     toGameMenuHandler _ = False
 
-    toGameMenuReaction p@(Page _ _ _ _ _ _ (GameInfo _ w _)) =
+    toGameMenuReaction p@(Page _ _ _ _ _ _ (GameInfo _ _ w _)) =
         return $ loaderPage p "TestGameMenu" pd $ gameMenuPage w pauseMenuListeners pd where
             pd = pathDlmtr p
 
@@ -62,14 +72,14 @@ module Pages.GamePage where
 
     walkListener :: (Char, GameEvent) -> Listener
     walkListener (c,ge) = Shortcut [handler] reaction where
-        handler (EventKey (Char c) Down _ _) = True
+        handler (EventKey (Char c') Down _ _) = c' == c
         handler _ = False
-        reaction (Page ls u h d l pd (GameInfo cp (World s ges us pic) wi)) =
-            return $ Page ls u h d l pd (GameInfo cp (World s (ge:ges) us pic) wi)
+        reaction (Page ls u h d l pd (GameInfo di cp (World s ges us pic) wi)) =
+            return $ Page ls u h d l pd (GameInfo di cp (World s (ge:ges) us pic) wi)
 
     stopListener :: (Char, GameEvent) -> Listener
     stopListener (c,ge) = Shortcut [handler] reaction where
-        handler (EventKey (Char c) up _ _) = True
+        handler (EventKey (Char c') up _ _) = c' == c
         handler _ = False
-        reaction (Page ls u h d l pd (GameInfo cp (World s ges us pic) wi)) =
-            return $ Page ls u h d l pd (GameInfo cp (World s (filter (/=ge) ges) us pic) wi)
+        reaction (Page ls u h d l pd (GameInfo di cp (World s ges us pic) wi)) =
+            return $ Page ls u h d l pd (GameInfo di cp (World s (filter (/=ge) ges) us pic) wi)

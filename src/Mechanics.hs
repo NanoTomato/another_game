@@ -89,5 +89,5 @@ module Mechanics where
         (rs,mps) = updateProjectiles ps cs ws [] []
 
     updateWorld :: World -> IO World
-    updateWorld w@(World pid ges _ _) = (return . uncurry (World pid updatedEvents) . makeWorldPicture) =<< updateWorld' w where
-        updatedEvents = nub $ filter (\ge -> elem ge $ map snd directionDict) ges
+    updateWorld w@(World pid ges _ _) = (return . uncurry (World pid ges) . makeWorldPicture) =<< updateWorld' w where
+        --updatedEvents = nub $ filter (\ge -> elem ge $ map snd directionDict) ges

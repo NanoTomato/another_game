@@ -16,7 +16,7 @@ module Pages.GameMenuPage where
                                  draw      = gameMenuDraw,
                                  load      = stdLoad,
                                  pathDlmtr = pd,
-                                 worldInfo = GameInfo (0,0) w (0,0)}
+                                 worldInfo = GameInfo "" (0,0) w (0,0)}
 
-    gameMenuDraw p@(Page _ _ _ _ _ _ (GameInfo _ (World _ _ _ pic) (x,y))) =
+    gameMenuDraw p@(Page _ _ _ _ _ _ (GameInfo _ _ (World _ _ _ pic) (x,y))) =
         pictures.(:color (makeColor 1 1 1 0.2) (rectangleSolid 5000 5000):[pic]) <$> stdDraw p
