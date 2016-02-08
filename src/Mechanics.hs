@@ -43,7 +43,7 @@ module Mechanics where
         else Creature newPos di newSpeed sl h r i si : updateCreatures ges cs ws is (c:acc) where
                  newPos = pvAddVector pos newSpeed
                  newSpeed = foldl vvMagicAdd oldSpeed vs
-                 oldSpeed = maxSpeed $ if si == Nothing then s else givenSpeed
+                 oldSpeed = maxSpeed $ if isNothing si then s else givenSpeed
                  maxSpeed v = if v==(0,0) then v else mulSV sl $ normalizeV v
                  givenSpeed = foldl vvScalarSum (0,0) givenDirections
                  givenDirections = map (\(Move d)->directionVector d) givenMoveEvents

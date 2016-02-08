@@ -48,7 +48,7 @@ ccIntersectionVector (c1,r1) (c2,r2) = if ppDistance c1 c2 < r1 + r2
                                        then V.mulSV c $ V.normalizeV n
                                        else (0,0) where
                                            c = sqrt $ (r1+r2)^2 - (V.magV n)^2
-                                           n = ppMakeVector c1 c2
+                                           n = ppMakeVector c2 c1
 
 vvScalarMul :: Vector -> Vector -> Vector
 vvScalarMul (x1,y1) (x2,y2) = (x1*x2,y1*y2)
@@ -62,7 +62,9 @@ vvMagicAdd v1 v2 = vvScalarSum v1 $ vvReflectVector v1 v2
 vvReflectVector :: Vector -> Vector -> Vector
 vvReflectVector (0,0) _ = (0,0)
 vvReflectVector s (0,0) = (0,0)
-vvReflectVector s@(xs,ys) n@(xn,yn) = V.rotateV (pi-alpha) $ (\x->(x,0)) $ fst $ V.rotateV alpha s where -- mulSV for leaving intersection area
+vvReflectVector s@(xs,ys) n@(xn,yn) = resVector where
+    resVector = if (V.angleVV s n > pi/2) then reflectedV else V.mulSV (V.magV s) $ V.normalizeV n
+    reflectedV = V.rotateV (pi-alpha) $ (\x->(x,0)) $ fst $ V.rotateV alpha s
     alpha = signum (maybeZero (-yn) ys) * V.angleVV n (1,0)
     maybeZero 0 y = y
     maybeZero x _ = x
